@@ -160,6 +160,13 @@ public class StudentNetworkSimulator extends NetworkSimulator
            String payload = message.getData(); 
            int checkSum = computeChecksum(nextSeqNum, -1, payload); 
            aPktBuffer[nextSeqNum] = new Packet(nextSeqNum, -1, checkSum, payload); 
+           if(nextSeqNum < aBase + WindowSize){
+               toLayer3(A, aPktBuffer[nextSeqNum]);    
+               if(nextSeqNum == FirstSeqNo){
+                    startTimer(A, RxmtInterval); 
+               }
+           } 
+           nextSeqNum++;
         }         
     }
     
