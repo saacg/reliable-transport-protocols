@@ -105,6 +105,34 @@ public class StudentNetworkSimulator extends NetworkSimulator
     public int aBase;
     public int bBase;   
 
+    // returns true if the packet in the aPktBuffer has been acknowledged
+    // (ackNum set to -1 when first sent, updated to value of ackNum when ack is received)
+    public boolean isAcked(int seqNum){
+    	
+    	if(aPktBuffer[seqNum] != null && aPktBuffer[seqNum].getAcknum() >= 0){
+            return true;
+        }	
+        return false;
+    }
+
+    public int getStringSum(String str){
+       int sum = 0;
+       if(str != null && !str.isEmpty()){
+          for (char c : str.toCharArray()){
+             sum += (int) c;
+          } 
+       } 
+       return sum;
+    }
+
+    public int computeChecksum(int seqNum, int ackNum, String payload){
+        int checkSum = 0;
+        if(payload != null && !payload.isEmpty()){
+            checkSum = seqNum + ackNum + getStringSum(payload);             
+        }
+        return checkSum;
+    }
+
     // This is the constructor.  Don't touch!
     public StudentNetworkSimulator(int numMessages,
                                    double loss,
@@ -128,7 +156,11 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // the receiving upper layer.
     protected void aOutput(Message message)
     {
-       
+        if(nextSeqNum < 50){
+           String payload = message.getData(); 
+           int checkSum = computeChecksum(nextSeqNum, -1, payload); 
+           aPktBuffer[nextSeqNum] = new Packet(nextSeqNum, -1, checkSum, payload); 
+        }         
     }
     
     // This routine will be called whenever a packet sent from the B-side 
@@ -157,8 +189,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
     protected void aInit()
     {
             aPktBuffer = new Packet[50];
-            nextSeqNum = FirstSeqNum;
-            aBase = FirstSeqNum;
+            nextSeqNum = FirstSeqNo;
+            aBase = FirstSeqNo;
     }
     
     // This routine will be called whenever a packet sent from the B-side 
@@ -177,8 +209,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
     protected void bInit()
     {
             bPktBuffer = new Packet[50];
-            nextAckNum = FirstSeqNum;
-            bBase = FirstSeqNum;
+            nextAckNum = FirstSeqNo;
+            bBase = FirstSeqNo;
     }
 
     // Use to print final statistics
