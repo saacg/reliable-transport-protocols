@@ -97,8 +97,14 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // these variables to send messages error free!  They can only hold
     // state information for A or B.
     // Also add any necessary methods (e.g. checksum of a String)
+
     public Packet[] aPktBuffer;
     public Packet[] bPktBuffer;  
+    public int nextSeqNum;
+    public int nextAckNum;
+    public int aBase;
+    public int bBase;   
+
     // This is the constructor.  Don't touch!
     public StudentNetworkSimulator(int numMessages,
                                    double loss,
@@ -122,7 +128,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // the receiving upper layer.
     protected void aOutput(Message message)
     {
-
+       
     }
     
     // This routine will be called whenever a packet sent from the B-side 
@@ -142,6 +148,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     {
 
     }
+
     
     // This routine will be called once, before any of your other A-side 
     // routines are called. It can be used to do any required
@@ -150,6 +157,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
     protected void aInit()
     {
             aPktBuffer = new Packet[50];
+            nextSeqNum = FirstSeqNum;
+            aBase = FirstSeqNum;
     }
     
     // This routine will be called whenever a packet sent from the B-side 
@@ -168,6 +177,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
     protected void bInit()
     {
             bPktBuffer = new Packet[50];
+            nextAckNum = FirstSeqNum;
+            bBase = FirstSeqNum;
     }
 
     // Use to print final statistics
