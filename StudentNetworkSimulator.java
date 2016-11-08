@@ -97,7 +97,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // these variables to send messages error free!  They can only hold
     // state information for A or B.
     // Also add any necessary methods (e.g. checksum of a String)
-
+    public Packet[] aPktBuffer;
+    public Packet[] bPktBuffer;  
     // This is the constructor.  Don't touch!
     public StudentNetworkSimulator(int numMessages,
                                    double loss,
@@ -148,7 +149,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // of entity A).
     protected void aInit()
     {
-
+            aPktBuffer = new Packet[50];
     }
     
     // This routine will be called whenever a packet sent from the B-side 
@@ -166,7 +167,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // of entity B).
     protected void bInit()
     {
-
+            bPktBuffer = new Packet[50];
     }
 
     // Use to print final statistics
