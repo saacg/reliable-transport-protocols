@@ -126,9 +126,9 @@ public class StudentNetworkSimulator extends NetworkSimulator
     }
 
     public int computeChecksum(int seqNum, int ackNum, String payload){
-        int checkSum = 0;
+        int checkSum = seqNum + ackNum;
         if(payload != null && !payload.isEmpty()){
-            checkSum = seqNum + ackNum + getStringSum(payload);             
+            checkSum += getStringSum(payload);             
         }
         return checkSum;
     }
@@ -176,7 +176,21 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // sent from the B-side.
     protected void aInput(Packet packet)
     {
-
+         if(packet.getChecksum() == computeChecksum(packet.getSeqnum(), packet.getAcknum(), packet.getPayload())){
+                int ackNum = packet.getAcknum();
+                if(ackNum < aBase + WindowSize && ackNum >= aBase){
+                      stopTimer(A);
+                      for(int i = aBase; i <= ackNum; i++){
+                              aPktBuffer[i].setAcknum(i);
+                              if(aPktBuffer[i + WindowSize - 1] != null){
+                                    toLayer3(A, aPktBuffer[i + WindowSize - 1]);
+                              }
+                      }
+                      aBase = ackNum + 1;
+                      startTimer(A, RxmtInterval); 
+                         
+                } 
+         }
     }
     
     // This routine will be called when A's timer expires (thus generating a 
@@ -206,7 +220,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // sent from the A-side.
     protected void bInput(Packet packet)
     {
-
+                         
     }
     
     // This routine will be called once, before any of your other B-side 
@@ -223,7 +237,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // Use to print final statistics
     protected void Simulation_done()
     {
-
+                 
     }	
 
 }
