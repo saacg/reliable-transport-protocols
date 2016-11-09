@@ -220,8 +220,25 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // arrives at the B-side.  "packet" is the (possibly corrupted) packet
     // sent from the A-side.
     protected void bInput(Packet packet)
-    {
-                          
+    {    int seqNum = packet.getSeqnum();
+         if(packet.getChecksum() == computeChecksum(seqNum, packet.getAcknum(), packet.getPayload())){
+             packet.setAcknum(seqNum);
+             bPktBuffer[seqNum] = new Packet(packet);
+             if(seqNum == bBase){
+                bBase++;
+                while(bPktBuffer[bBase] != null){
+                    toLayer5(bPktBuffer[bBase].getPayload());
+                    bBase++;
+                }
+                int newSeq = bPktBuffer[bBase - 1].getSeqnum();
+                int newAck = bPktBuffer[bBase - 1].getAcknum();
+                int newCheck = computeChecksum(newSeq, newAck, "");
+                Packet ackPack = new Packet(newSeq, newAck, newCheck, "");  
+                toLayer3(B, ackPack);
+             }
+              
+         }
+                        
     }
     
     // This routine will be called once, before any of your other B-side 
