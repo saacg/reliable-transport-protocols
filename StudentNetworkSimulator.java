@@ -233,7 +233,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                 int newSeq = bPktBuffer[bBase - 1].getSeqnum();
                 int newAck = bPktBuffer[bBase - 1].getAcknum();
                 int newCheck = computeChecksum(newSeq, newAck, "");
-                Packet ackPack = new Packet(newSeq, newAck, newCheck, "");  
+                Packet ackPack = new Packet(newSeq, newAck, newCheck);  
                 toLayer3(B, ackPack);
              }
               
