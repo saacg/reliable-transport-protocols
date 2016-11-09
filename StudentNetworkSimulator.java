@@ -225,6 +225,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
              packet.setAcknum(seqNum);
              bPktBuffer[seqNum] = new Packet(packet);
              if(seqNum == bBase){
+                toLayer5(bPktBuffer[bBase].getPayload());
                 bBase++;
                 while(bPktBuffer[bBase] != null){
                     toLayer5(bPktBuffer[bBase].getPayload());
