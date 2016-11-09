@@ -104,6 +104,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     public int nextAckNum;
     public int aBase;
     public int bBase;   
+    public int lastAcked;
 
     // returns true if the packet in the aPktBuffer has been acknowledged
     // (ackNum set to -1 when first sent, updated to value of ackNum when ack is received)
@@ -178,6 +179,11 @@ public class StudentNetworkSimulator extends NetworkSimulator
     {
 	    if(packet.getChecksum() == computeChecksum(packet.getSeqnum(), packet.getAcknum(), packet.getPayload())){
 	        int ackNum = packet.getAcknum();
+            if(aPktBuffer[ackNum] != null && isAcked(ackNum)){
+                if(aPktBuffer[ackNum + 1] != null && !isAcked(ackNum + 1)){
+                    toLayer3(A, aPktBuffer[ackNum + 1]);
+                }
+            }
 	        if(ackNum < aBase + WindowSize && ackNum >= aBase){
 		        stopTimer(A);
 		        for(int i = aBase; i <= ackNum; i++){
@@ -188,7 +194,6 @@ public class StudentNetworkSimulator extends NetworkSimulator
 		        }
 		        aBase = ackNum + 1;
 		        startTimer(A, RxmtInterval); 
-                         
 	        }    
 	    }
     }
@@ -224,7 +229,13 @@ public class StudentNetworkSimulator extends NetworkSimulator
          if(packet.getChecksum() == computeChecksum(seqNum, packet.getAcknum(), packet.getPayload())){
              packet.setAcknum(seqNum);
              bPktBuffer[seqNum] = new Packet(packet);
-             if(seqNum == bBase){
+             if(lastAcked > -1 && seqNum > lastAcked && seqNum != bBase && bPktBuffer[lastAcked] != null){
+                int lastSeqNum = bPktBuffer[lastAcked].getSeqnum();
+                int lastAckNum = bPktBuffer[lastAcked].getAcknum();
+                int lastCheck = computeChecksum(lastSeqNum, lastAckNum, "");
+                toLayer3(B, new Packet(lastSeqNum, lastAckNum, lastCheck));  
+             }              
+             else if(seqNum == bBase){
                 toLayer5(bPktBuffer[bBase].getPayload());
                 bBase++;
                 while(bPktBuffer[bBase] != null){
@@ -236,6 +247,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                 int newCheck = computeChecksum(newSeq, newAck, "");
                 Packet ackPack = new Packet(newSeq, newAck, newCheck);  
                 toLayer3(B, ackPack);
+                lastAcked = newAck;
              }
               
          }
@@ -251,6 +263,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
 	    bPktBuffer = new Packet[50];
 	    nextAckNum = FirstSeqNo;
 	    bBase = FirstSeqNo;
+        lastAcked = -1;
     }
 
     // Use to print final statistics
