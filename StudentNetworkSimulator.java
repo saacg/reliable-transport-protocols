@@ -116,13 +116,13 @@ public class StudentNetworkSimulator extends NetworkSimulator
     }
 
     public int getStringSum(String str){
-       int sum = 0;
-       if(str != null && !str.isEmpty()){
-          for (char c : str.toCharArray()){
-             sum += (int) c;
-          } 
-       } 
-       return sum;
+	    int sum = 0;
+	    if(str != null && !str.isEmpty()){
+	        for (char c : str.toCharArray()){
+		        sum += (int) c;
+	        } 
+	    }    
+	    return sum;
     }
 
     public int computeChecksum(int seqNum, int ackNum, String payload){
@@ -144,9 +144,9 @@ public class StudentNetworkSimulator extends NetworkSimulator
                                    double delay)
     {
         super(numMessages, loss, corrupt, avgDelay, trace, seed);
-	WindowSize = winsize;
-	LimitSeqNo = winsize+1;
-	RxmtInterval = delay;
+	    WindowSize = winsize;
+	    LimitSeqNo = winsize+1;
+	    RxmtInterval = delay;
     }
 
     
@@ -157,16 +157,16 @@ public class StudentNetworkSimulator extends NetworkSimulator
     protected void aOutput(Message message)
     {
         if(nextSeqNum < 50){
-           String payload = message.getData(); 
-           int checkSum = computeChecksum(nextSeqNum, -1, payload); 
-           aPktBuffer[nextSeqNum] = new Packet(nextSeqNum, -1, checkSum, payload); 
-           if(nextSeqNum < aBase + WindowSize){
-               toLayer3(A, aPktBuffer[nextSeqNum]);    
-               if(nextSeqNum == FirstSeqNo){
+	        String payload = message.getData(); 
+	        int checkSum = computeChecksum(nextSeqNum, -1, payload); 
+	        aPktBuffer[nextSeqNum] = new Packet(nextSeqNum, -1, checkSum, payload); 
+	        if(nextSeqNum < aBase + WindowSize){
+		        toLayer3(A, aPktBuffer[nextSeqNum]);    
+		        if(nextSeqNum == FirstSeqNo){
                     startTimer(A, RxmtInterval); 
-               }
-           } 
-           nextSeqNum++;
+		        }
+	        }    
+	        nextSeqNum++;
         }         
     }
     
@@ -176,21 +176,21 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // sent from the B-side.
     protected void aInput(Packet packet)
     {
-         if(packet.getChecksum() == computeChecksum(packet.getSeqnum(), packet.getAcknum(), packet.getPayload())){
-                int ackNum = packet.getAcknum();
-                if(ackNum < aBase + WindowSize && ackNum >= aBase){
-                      stopTimer(A);
-                      for(int i = aBase; i <= ackNum; i++){
-                              aPktBuffer[i].setAcknum(i);
-                              if(aPktBuffer[i + WindowSize - 1] != null){
-                                    toLayer3(A, aPktBuffer[i + WindowSize - 1]);
-                              }
-                      }
-                      aBase = ackNum + 1;
-                      startTimer(A, RxmtInterval); 
+	    if(packet.getChecksum() == computeChecksum(packet.getSeqnum(), packet.getAcknum(), packet.getPayload())){
+	        int ackNum = packet.getAcknum();
+	        if(ackNum < aBase + WindowSize && ackNum >= aBase){
+		        stopTimer(A);
+		        for(int i = aBase; i <= ackNum; i++){
+		            aPktBuffer[i].setAcknum(i);
+		            if(aPktBuffer[i + WindowSize - 1] != null){
+			            toLayer3(A, aPktBuffer[i + WindowSize - 1]);
+		            }   
+		        }
+		        aBase = ackNum + 1;
+		        startTimer(A, RxmtInterval); 
                          
-                } 
-         }
+	        }    
+	    }
     }
     
     // This routine will be called when A's timer expires (thus generating a 
@@ -199,7 +199,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // for how the timer is started and stopped. 
     protected void aTimerInterrupt()
     {
-
+        toLayer3(A, aPktBuffer[aBase]);
+        startTimer(A, RxmtInterval);  
     }
 
     
@@ -209,9 +210,9 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // of entity A).
     protected void aInit()
     {
-            aPktBuffer = new Packet[50];
-            nextSeqNum = FirstSeqNo;
-            aBase = FirstSeqNo;
+    	aPktBuffer = new Packet[50];
+	    nextSeqNum = FirstSeqNo;
+	    aBase = FirstSeqNo;
     }
     
     // This routine will be called whenever a packet sent from the B-side 
@@ -220,7 +221,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // sent from the A-side.
     protected void bInput(Packet packet)
     {
-                         
+                          
     }
     
     // This routine will be called once, before any of your other B-side 
@@ -229,9 +230,9 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // of entity B).
     protected void bInit()
     {
-            bPktBuffer = new Packet[50];
-            nextAckNum = FirstSeqNo;
-            bBase = FirstSeqNo;
+	    bPktBuffer = new Packet[50];
+	    nextAckNum = FirstSeqNo;
+	    bBase = FirstSeqNo;
     }
 
     // Use to print final statistics
