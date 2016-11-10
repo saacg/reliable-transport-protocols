@@ -35,7 +35,6 @@ public class Packet
         sack = new int[]{-1, -1, -1, -1, -1};
     }
 
-    // hi
     public Packet(int seq, int ack, int check)
     {
         seqnum = seq;

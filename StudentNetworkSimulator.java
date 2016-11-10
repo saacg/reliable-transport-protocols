@@ -206,6 +206,26 @@ public class StudentNetworkSimulator extends NetworkSimulator
             int[] pktSack = packet.getSack();
             for (int i = 0; i < 4; i++)
             {
+                // test difference between pkt Ack and first index of sack, re-send pkts between
+                // if diff > 1
+                if (i == 0 && pktSack[i] != -1)
+                {
+                    int difference = pktSack[i] - aAcked;
+                    if (difference > 1)
+                    {
+                        for (int j = aAcked + 1; j < pktSack[i]; j++)
+                        {
+                            if (aBuffer[j] != null)
+                            {
+                                toLayer3(A, aBuffer[j]);
+                                System.out.println("Packet " + Integer.toString(j) + " re-sent to B because of SACK.");
+                            }
+                        }
+
+                    }
+
+                }
+                // now do same test for non-negative elements of sack array
                 if (pktSack[i] != -1 && pktSack[i + 1] != -1)
                 {
                     int difference = pktSack[i + 1] - pktSack[i];
