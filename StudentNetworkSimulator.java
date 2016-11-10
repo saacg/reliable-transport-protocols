@@ -106,6 +106,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
 
     // stat collecting variables
     public static int corruptionCount = 0;    
+    public static int errorCount = 0;
+    public static int lossCount = 0;
 
     // This is the constructor.  Don't touch!
     public StudentNetworkSimulator(int numMessages,
@@ -221,6 +223,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                             {
                                 toLayer3(A, aBuffer[j]);
                                 System.out.println("Packet " + Integer.toString(j) + " re-sent to B because of SACK.");
+                                errorCount++;
 
                             }
 
@@ -250,6 +253,10 @@ public class StudentNetworkSimulator extends NetworkSimulator
             stopTimer(A);
             startTimer(A, RxmtInterval);
         }
+        else
+        {
+            corruptionCount++;
+        }
     }
     
     // This routine will be called when A's timer expires (thus generating a 
@@ -264,6 +271,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
             System.out.println("Packet " + Integer.toString(aBuffer[aAcked + 1].getAcknum())
                     + " re-sent to B because of timeout.");
             startTimer(A, RxmtInterval);
+            errorCount++;
         } else {
             startTimer(A, RxmtInterval);
         }
@@ -342,6 +350,10 @@ public class StudentNetworkSimulator extends NetworkSimulator
                 }
             }
         }
+        else
+        {
+            corruptionCount++;
+        }
     }
     
     // This routine will be called once, before any of your other B-side 
@@ -358,6 +370,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
     protected void Simulation_done()
     {
         System.out.println("Done!");
+        System.out.println("corruptions: " + Integer.toString(corruptionCount));
+        lossCount = errorCount - corruptionCount;
 
     }	
 
