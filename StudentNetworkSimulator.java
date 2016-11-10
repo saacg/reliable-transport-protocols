@@ -98,6 +98,9 @@ public class StudentNetworkSimulator extends NetworkSimulator
     public static int bLastAcked;
     public static Packet[] aBuffer;
     public static Packet[] bBuffer;
+    public static int sendCount = 0;
+    public static int receiveCount = 0;
+    public static int corruptionCount = 0;
 
     // Add any necessary class variables here.  Remember, you cannot use
     // these variables to send messages error free!  They can only hold
@@ -185,7 +188,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (seqNum < aAcked + WindowSize)
         {
             toLayer3(A, packet);
-            // startTimer(A, RxmtInterval);
+            // track sent packets
+            sendCount++;
             System.out.println("Packet " + Integer.toString(ackNum) + " sent to B");
         }
     }
@@ -196,6 +200,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // sent from the B-side.
     protected void aInput(Packet packet)
     {
+        // track incoming packets
+        receiveCount++;
         if (checkSumSack(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload(),
                 packet.getSack()))
         {
@@ -218,10 +224,11 @@ public class StudentNetworkSimulator extends NetworkSimulator
                             if (aBuffer[j] != null)
                             {
                                 toLayer3(A, aBuffer[j]);
+                                // track sent packets
+                                sendCount++;
                                 System.out.println("Packet " + Integer.toString(j) + " re-sent to B because of SACK.");
                             }
                         }
-
                     }
 
                 }
@@ -237,6 +244,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
                             if (aBuffer[j] != null)
                             {
                                 toLayer3(A, aBuffer[j]);
+                                // track sent packets
+                                sendCount++;
                                 System.out.println("Packet " + Integer.toString(j) + " re-sent to B because of SACK.");
 
                             }
@@ -260,12 +269,18 @@ public class StudentNetworkSimulator extends NetworkSimulator
                 if (aBuffer[i] != null)
                 {
                     toLayer3(A, aBuffer[i]);
+                    // track sent packets
+                    sendCount++;
                     System.out.println("Packet " + Integer.toString(aBuffer[i].getAcknum())
                             + " sent to B after window adjustment.");
                 }
             }
             stopTimer(A);
             startTimer(A, RxmtInterval);
+        }
+        else
+        {
+            corruptionCount++;
         }
     }
     
@@ -278,10 +293,14 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (aBuffer[aAcked + 1] != null)
         {
             toLayer3(A, aBuffer[aAcked + 1]);
+            // track sent packets
+            sendCount++;
             System.out.println("Packet " + Integer.toString(aBuffer[aAcked + 1].getAcknum())
                     + " re-sent to B because of timeout.");
             startTimer(A, RxmtInterval);
-        } else {
+        }
+        else
+        {
             startTimer(A, RxmtInterval);
         }
     }
@@ -294,7 +313,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     {
         aCurrentSeqNo = FirstSeqNo;
         aAcked = -1;
-        aBuffer = new Packet[1500];
+        aBuffer = new Packet[5000];
         startTimer(A, RxmtInterval);
     }
     
@@ -304,6 +323,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // sent from the A-side.
     protected void bInput(Packet packet)
     {
+        receiveCount++;
         if (checkSum(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload()))
         {
             System.out.println("Packet " + Integer.toString(packet.getSeqnum()) + " received at B.");
@@ -333,8 +353,6 @@ public class StudentNetworkSimulator extends NetworkSimulator
                             // length of SACK array = 5
                             if (k < 5)
                             {
-                                // System.out.println("j = " + Integer.toString(j));
-                                // System.out.println("Acknum = " + Integer.toString(bBuffer[j].getAcknum()));
                                 ackPack.setSackI(k, bBuffer[j].getAcknum());
                                 k++;
                             }
@@ -345,19 +363,17 @@ public class StudentNetworkSimulator extends NetworkSimulator
                     ackPack.setChecksum(checkSum);
                     bLastAcked = i - 1;
                     int[] test = ackPack.getSack();
-                    // computeCheckSum is fine but the packets arriving on the A side are missing the SACK values.
-                    // So, whenever there are items in the queue, computeCheckSum fails on side A. I have no
-                    // idea why the SACK array isn't being carried to side A.
-                    System.out.println("Before sending to side A: ");
-                    for (int j = 0; j < test.length; j++)
-                    {
-                        System.out.println(Integer.toString(test[j]));
-                    }
                     toLayer3(B, ackPack);
+                    // track sent packets
+                    sendCount++;
                     System.out.println("Ack for " + Integer.toString(bBuffer[i - 1].getSeqnum())
                             + " sent from B to A");
                 }
             }
+        }
+        else
+        {
+            corruptionCount++;
         }
     }
     
@@ -367,7 +383,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // of entity B).
     protected void bInit()
     {
-        bBuffer = new Packet[1500];
+        bBuffer = new Packet[5000];
         bLastAcked = -1;
     }
 
@@ -375,6 +391,11 @@ public class StudentNetworkSimulator extends NetworkSimulator
     protected void Simulation_done()
     {
         System.out.println("Done!");
+        System.out.println("Total Packets Sent: " + Integer.toString(sendCount));
+        System.out.println("Total Packets Received: " + Integer.toString(receiveCount));
+        System.out.println("Total Packets Lost Due to Corruption: " + Integer.toString(corruptionCount));
+        System.out.println("Total Packets Lost Due to Error: " + Integer.toString(sendCount - receiveCount
+                - corruptionCount));
 
     }	
 
