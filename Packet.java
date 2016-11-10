@@ -4,7 +4,8 @@ public class Packet
     private int acknum;
     private int checksum;
     private String payload;
-    
+    private int [] sack;
+
     public Packet(Packet p)
     {
         seqnum = p.getSeqnum();
@@ -12,12 +13,12 @@ public class Packet
         checksum = p.getChecksum();
         payload = new String(p.getPayload());
     }
-    
     public Packet(int seq, int ack, int check, String newPayload)
     {
         seqnum = seq;
         acknum = ack;
         checksum = check;
+        sack = new int[5];
         if (newPayload == null)
         {
             payload = "";
@@ -30,6 +31,32 @@ public class Packet
         {
             payload = new String(newPayload);
         }
+        
+    }
+    public Packet(int seq, int ack, int check, String newPayload, int [] newSack)
+    {
+        seqnum = seq;
+        acknum = ack;
+        checksum = check;
+        sack = new int[5];
+        if (newPayload == null)
+        {
+            payload = "";
+        }        
+        else if (newPayload.length() > NetworkSimulator.MAXDATASIZE)
+        {
+            payload = null;
+        }
+        else
+        {
+            payload = new String(newPayload);
+        }
+        
+        int len = newSack.length < 5 ? newSack.length : 5;
+        for(int i = 0; i < len; i++){
+            sack[i] = newSack[i];
+        }
+                 
     }
     
     public Packet(int seq, int ack, int check)
@@ -38,6 +65,7 @@ public class Packet
         acknum = ack;
         checksum = check;
         payload = "";
+        sack = new int[5];
     }    
         
 
@@ -75,6 +103,16 @@ public class Packet
         {
             payload = new String(newPayload);
             return true;
+        }
+    }
+
+    public boolean setSack(int [] newSack)
+    {
+        if(newSack.length == 0){
+            return false;
+        }
+        else if(newSack.length < 5){
+            for(int i = 0; i < newSack.length) 
         }
     }
     
