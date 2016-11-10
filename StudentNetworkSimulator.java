@@ -98,6 +98,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
     public static int bLastAcked;
     public static Packet[] aBuffer;
     public static Packet[] bBuffer;
+    public static int corruptionCount = 0;
+    public static int lossCount = 0;
 
     // Add any necessary class variables here.  Remember, you cannot use
     // these variables to send messages error free!  They can only hold
@@ -182,6 +184,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
             // duplicate ack case
             if (aAcked == prev_aAcked)
             {
+                lossCount += 1;
                 toLayer3(A, aBuffer[aAcked + 1]);
                 System.out.println("Duplicate Ack " + Integer.toString(aAcked)
                         + " received at A. Packet " + Integer.toString(aAcked + 1)
@@ -209,6 +212,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
                 stopTimer(A);
                 startTimer(A, RxmtInterval);
             }
+        } else {
+            corruptionCount += 1;
         }
     }
     
@@ -259,7 +264,6 @@ public class StudentNetworkSimulator extends NetworkSimulator
                         + " sent to upper layer from B");
                 i++;
             }
-            // System.out.println("Current index: " + Integer.toString(i));
             if (i - 1 > -1)
             {
                 if (bBuffer[i - 1] != null)
@@ -271,6 +275,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
                     System.out.println("Ack for " + Integer.toString(bBuffer[i - 1].getSeqnum()) + " sent from B to A");
                 }
             }
+        } else {
+            corruptionCount += 1;
         }
     }
     
@@ -288,7 +294,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
     protected void Simulation_done()
     {
         System.out.println("Done!");
-
-    }	
-
+        System.out.println("Total Packets Lost (due to error or corruption): " + Integer.toString(lossCount));
+        System.out.println("Total Packets Lost Due to Corruption: " + Integer.toString(corruptionCount));
+        System.out.println("Total Packets Lost Due to Error: " + Integer.toString(lossCount - corruptionCount));
+    }
 }
