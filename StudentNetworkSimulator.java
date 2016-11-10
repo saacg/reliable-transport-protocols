@@ -247,7 +247,6 @@ public class StudentNetworkSimulator extends NetworkSimulator
                                 // track sent packets
                                 sendCount++;
                                 System.out.println("Packet " + Integer.toString(j) + " re-sent to B because of SACK.");
-
                             }
 
                         }
@@ -396,7 +395,6 @@ public class StudentNetworkSimulator extends NetworkSimulator
         System.out.println("Total Packets Lost Due to Corruption: " + Integer.toString(corruptionCount));
         System.out.println("Total Packets Lost Due to Error: " + Integer.toString(sendCount - receiveCount
                 - corruptionCount));
-
     }	
 
 }
