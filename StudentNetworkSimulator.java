@@ -101,6 +101,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     public static int corruptionCount = 0;
     public static int sendCount = 0;
     public static int receiveCount = 0;
+    public static double[][] timeArray = new double[1500][2];
 
     // Add any necessary class variables here.  Remember, you cannot use
     // these variables to send messages error free!  They can only hold
@@ -165,6 +166,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (seqNum < aAcked + WindowSize)
         {
             toLayer3(A, packet);
+            timeArray[seqNum][0] = getTime();
             // keep track of total packets sent
             sendCount++;
             // startTimer(A, RxmtInterval);
@@ -181,7 +183,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         receiveCount++;
         if (checkSum(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload()))
         {
-
+            timeArray[packet.getSeqnum()][1] = getTime();
             int prev_aAcked = aAcked;
             // update Ack index
             aAcked = packet.getSeqnum();
@@ -189,6 +191,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
             if (aAcked == prev_aAcked)
             {
                 toLayer3(A, aBuffer[aAcked + 1]);
+                timeArray[aAcked + 1][0] = getTime();
                 // keep track of total packets sent
                 sendCount++;
                 System.out.println("Duplicate Ack " + Integer.toString(aAcked)
@@ -216,6 +219,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                     if (aBuffer[i] != null)
                     {
                         toLayer3(A, aBuffer[i]);
+                        timeArray[i][0] = getTime();
                         // keep track of total packets sent
                         sendCount++;
                         System.out.println("Packet " + Integer.toString(aBuffer[i].getAcknum())
@@ -241,6 +245,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (aBuffer[aAcked + 1] != null)
         {
             toLayer3(A, aBuffer[aAcked + 1]);
+            timeArray[aAcked + 1][0] = getTime();
             // keep track of total packets sent
             sendCount++;
             System.out.println("Packet " + Integer.toString(aBuffer[aAcked + 1].getAcknum())
@@ -320,5 +325,12 @@ public class StudentNetworkSimulator extends NetworkSimulator
         System.out.println("Total Packets Lost Due to Corruption: " + Integer.toString(corruptionCount));
         System.out.println("Total Packets Lost Due to Error: " + Integer.toString(sendCount - receiveCount
                 - corruptionCount));
+
+       int i = 0;
+       double avgRtt = 0;
+       while(timeArray[i][0] > 0)
+       {
+             
+       } 
     }
 }
