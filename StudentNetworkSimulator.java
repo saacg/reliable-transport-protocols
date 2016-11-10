@@ -101,6 +101,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     public static int corruptionCount = 0;
     public static int sendCount = 0;
     public static int receiveCount = 0;
+    public static int retransmit = 0;
 
     // Add any necessary class variables here.  Remember, you cannot use
     // these variables to send messages error free!  They can only hold
@@ -188,14 +189,18 @@ public class StudentNetworkSimulator extends NetworkSimulator
             // duplicate ack case
             if (aAcked == prev_aAcked)
             {
-                toLayer3(A, aBuffer[aAcked + 1]);
-                // keep track of total packets sent
-                sendCount++;
-                System.out.println("Duplicate Ack " + Integer.toString(aAcked)
-                        + " received at A. Packet " + Integer.toString(aAcked + 1)
-                        + " re-sent to B.");
-                stopTimer(A);
-                startTimer(A, RxmtInterval);
+                if (aBuffer[aAcked + 1] != null)
+                {
+                    toLayer3(A, aBuffer[aAcked + 1]);
+                    // keep track of total packets sent
+                    sendCount++;
+                    retransmit++;
+                    System.out.println("Duplicate Ack " + Integer.toString(aAcked)
+                            + " received at A. Packet " + Integer.toString(aAcked + 1)
+                            + " re-sent to B.");
+                    stopTimer(A);
+                    startTimer(A, RxmtInterval);
+                }
             }
             else
                 {
@@ -243,6 +248,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
             toLayer3(A, aBuffer[aAcked + 1]);
             // keep track of total packets sent
             sendCount++;
+            retransmit++;
             System.out.println("Packet " + Integer.toString(aBuffer[aAcked + 1].getAcknum())
                     + " re-sent to B because of timeout.");
             startTimer(A, RxmtInterval);
@@ -259,7 +265,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     {
         aCurrentSeqNo = FirstSeqNo;
         aAcked = -1;
-        aBuffer = new Packet[1500];
+        aBuffer = new Packet[5000];
         startTimer(A, RxmtInterval);
     }
     
@@ -274,6 +280,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (checkSum(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload()))
         {
             System.out.println("Packet " + Integer.toString(packet.getSeqnum()) + " received at B.");
+            System.out.println("bLastAcked = " + Integer.toString(bLastAcked));
             bBuffer[packet.getSeqnum()] = packet;
             int i = bLastAcked + 1;
             while(bBuffer[i] != null)
@@ -289,11 +296,22 @@ public class StudentNetworkSimulator extends NetworkSimulator
                 {
                     int checkSum = computeChecksum(bBuffer[i - 1].getSeqnum(), bBuffer[i - 1].getAcknum(), "");
                     Packet ackPack = new Packet(bBuffer[i - 1].getSeqnum(), bBuffer[i - 1].getAcknum(), checkSum);
-                    bLastAcked = i - 1;
-                    toLayer3(B, ackPack);
-                    // keep track of total packets sent
-                    sendCount++;
-                    System.out.println("Ack for " + Integer.toString(bBuffer[i - 1].getSeqnum()) + " sent from B to A");
+                    // check if ack is duplicate
+                    if (bLastAcked == i - 1)
+                    {
+                        toLayer3(B, ackPack);
+                        sendCount++;
+                        retransmit++;
+                    }
+                    // original packet
+                    else
+                    {
+                        bLastAcked = i - 1;
+                        toLayer3(B, ackPack);
+                        // keep track of total packets sent
+                        sendCount++;
+                        System.out.println("Ack for " + Integer.toString(bBuffer[i - 1].getSeqnum()) + " sent from B to A");
+                    }
                 }
             }
         } else {
@@ -307,7 +325,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // of entity B).
     protected void bInit()
     {
-        bBuffer = new Packet[1500];
+        bBuffer = new Packet[5000];
         bLastAcked = -1;
     }
 
@@ -320,5 +338,6 @@ public class StudentNetworkSimulator extends NetworkSimulator
         System.out.println("Total Packets Lost Due to Corruption: " + Integer.toString(corruptionCount));
         System.out.println("Total Packets Lost Due to Error: " + Integer.toString(sendCount - receiveCount
                 - corruptionCount));
+        System.out.println("Total Retransmitted Packets: " + Integer.toString(retransmit));
     }
 }
