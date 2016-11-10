@@ -179,28 +179,36 @@ public class StudentNetworkSimulator extends NetworkSimulator
             int prev_aAcked = aAcked;
             // update Ack index
             aAcked = packet.getSeqnum();
-            System.out.println("Ack Number " + Integer.toString(aAcked) + " received at A.");
-            // discard packets from previously acked packet up to
-            // currently acked packet.
-            for (int i = prev_aAcked; i <= aAcked; i++)
+            // duplicate ack case
+            if (aAcked == prev_aAcked)
             {
-                if (i > -1)
-                {
-                    aBuffer[i] = null;
+                toLayer3(A, aBuffer[aAcked + 1]);
+                System.out.println("Duplicate Ack " + Integer.toString(aAcked)
+                        + " received at A. Packet " + Integer.toString(aAcked + 1)
+                        + " re-sent to B.");
+                stopTimer(A);
+                startTimer(A, RxmtInterval);
+            } else {
+                System.out.println("Ack Number " + Integer.toString(aAcked) + " received at A.");
+                // Ack is not a duplicate.
+                // discard packets from previously acked packet up to
+                // currently acked packet.
+                for (int i = prev_aAcked; i <= aAcked; i++) {
+                    if (i > -1) {
+                        aBuffer[i] = null;
+                    }
                 }
-            }
-            // send packets within adjusted sender window
-            for (int i = prev_aAcked + WindowSize; i < aAcked + WindowSize; i++)
-            {
-                if (aBuffer[i] != null)
-                {
-                    toLayer3(A, aBuffer[i]);
-                    System.out.println("Packet " + Integer.toString(aBuffer[i].getAcknum())
-                            + " sent to B after window adjustment.");
+                // send packets within adjusted sender window
+                for (int i = prev_aAcked + WindowSize; i < aAcked + WindowSize; i++) {
+                    if (aBuffer[i] != null) {
+                        toLayer3(A, aBuffer[i]);
+                        System.out.println("Packet " + Integer.toString(aBuffer[i].getAcknum())
+                                + " sent to B after window adjustment.");
+                    }
                 }
+                stopTimer(A);
+                startTimer(A, RxmtInterval);
             }
-            stopTimer(A);
-            startTimer(A, RxmtInterval);
         }
     }
     
