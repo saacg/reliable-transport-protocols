@@ -208,7 +208,7 @@ public abstract class NetworkSimulator
 
         Event timer = eventList.removeTimer(entity);
 
-        // Let the student know they are attempting to cancel a non-existant 
+        // Let the student know they are attempting to cancel a non-existent
         // timer
         if (timer == null)
         {

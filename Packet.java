@@ -3,6 +3,7 @@ public class Packet
     private int seqnum;
     private int acknum;
     private int checksum;
+    private int[] sack;
     private String payload;
     
     public Packet(Packet p)
@@ -11,6 +12,7 @@ public class Packet
         acknum = p.getAcknum();
         checksum = p.getChecksum();
         payload = new String(p.getPayload());
+        sack = p.getSack();
     }
     
     public Packet(int seq, int ack, int check, String newPayload)
@@ -30,6 +32,7 @@ public class Packet
         {
             payload = new String(newPayload);
         }
+        sack = new int[]{-1, -1, -1, -1, -1};
     }
     
     public Packet(int seq, int ack, int check)
@@ -38,7 +41,14 @@ public class Packet
         acknum = ack;
         checksum = check;
         payload = "";
-    }    
+        sack = new int[]{-1, -1, -1, -1, -1};
+    }
+
+    public boolean setSackI(int i, int n)
+    {
+        sack[i] = n;
+        return true;
+    }
         
 
     public boolean setSeqnum(int n)
@@ -77,6 +87,8 @@ public class Packet
             return true;
         }
     }
+
+    public int[] getSack() { return sack; }
     
     public int getSeqnum()
     {
@@ -97,7 +109,7 @@ public class Packet
     {
         return payload;
     }
-    
+
     public String toString()
     {
         return("seqnum: " + seqnum + "  acknum: " + acknum + "  checksum: " +
