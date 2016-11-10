@@ -181,7 +181,9 @@ public class StudentNetworkSimulator extends NetworkSimulator
 	        int ackNum = packet.getAcknum();
             if(aPktBuffer[ackNum] != null && isAcked(ackNum)){
                 if(aPktBuffer[ackNum + 1] != null && !isAcked(ackNum + 1)){
+                    stopTimer(A); 
                     toLayer3(A, aPktBuffer[ackNum + 1]);
+                    startTimer(A, RxmtInterval);
                 }
             }
 	        if(ackNum < aBase + WindowSize && ackNum >= aBase){
