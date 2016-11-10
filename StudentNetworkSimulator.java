@@ -101,6 +101,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     public static int sendCount = 0;
     public static int receiveCount = 0;
     public static int corruptionCount = 0;
+    public static int retransmit = 0;
 
     // Add any necessary class variables here.  Remember, you cannot use
     // these variables to send messages error free!  They can only hold
@@ -130,8 +131,6 @@ public class StudentNetworkSimulator extends NetworkSimulator
 
     public boolean checkSumSack(int seqNo, int ackNo, int checksum, String payload, int[] sack)
     {
-        System.out.println("Checksum = " + Integer.toString(checksum));
-        System.out.println("Computed Checksum = " + Integer.toString(computeChecksumSack(seqNo, ackNo, payload, sack)));
         return (computeChecksumSack(seqNo, ackNo, payload, sack) == checksum);
     }
 
@@ -226,6 +225,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                                 toLayer3(A, aBuffer[j]);
                                 // track sent packets
                                 sendCount++;
+                                retransmit++;
                                 System.out.println("Packet " + Integer.toString(j) + " re-sent to B because of SACK.");
                             }
                         }
@@ -246,6 +246,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                                 toLayer3(A, aBuffer[j]);
                                 // track sent packets
                                 sendCount++;
+                                retransmit++;
                                 System.out.println("Packet " + Integer.toString(j) + " re-sent to B because of SACK.");
                             }
 
@@ -294,6 +295,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
             toLayer3(A, aBuffer[aAcked + 1]);
             // track sent packets
             sendCount++;
+            retransmit++;
             System.out.println("Packet " + Integer.toString(aBuffer[aAcked + 1].getAcknum())
                     + " re-sent to B because of timeout.");
             startTimer(A, RxmtInterval);
@@ -335,7 +337,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                         + " sent to upper layer from B");
                 i++;
             }
-            // System.out.println("Current index: " + Integer.toString(i));
+            // just for case right after init() when i = 0
             if (i - 1 > -1)
             {
                 // should be the case, since i was first index where bBuffer was null
@@ -360,13 +362,24 @@ public class StudentNetworkSimulator extends NetworkSimulator
                     int checkSum = computeChecksumSack(ackPack.getSeqnum(), ackPack.getAcknum(),
                             ackPack.getPayload(), ackPack.getSack());
                     ackPack.setChecksum(checkSum);
-                    bLastAcked = i - 1;
-                    int[] test = ackPack.getSack();
-                    toLayer3(B, ackPack);
-                    // track sent packets
-                    sendCount++;
-                    System.out.println("Ack for " + Integer.toString(bBuffer[i - 1].getSeqnum())
-                            + " sent from B to A");
+                    // check if this is a retransmit
+                    if (bLastAcked == i - 1)
+                    {
+                        toLayer3(B, ackPack);
+                        sendCount++;
+                        retransmit++;
+                        System.out.println("Ack for " + Integer.toString(bBuffer[i - 1].getSeqnum())
+                                + " re-sent from B to A");
+                    }
+                    // update bLastAcked, send ack
+                    else
+                    {
+                        bLastAcked = i - 1;
+                        toLayer3(B, ackPack);
+                        sendCount++;
+                        System.out.println("Ack for " + Integer.toString(bBuffer[i - 1].getSeqnum())
+                                + " sent from B to A");
+                    }
                 }
             }
         }
@@ -395,6 +408,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         System.out.println("Total Packets Lost Due to Corruption: " + Integer.toString(corruptionCount));
         System.out.println("Total Packets Lost Due to Error: " + Integer.toString(sendCount - receiveCount
                 - corruptionCount));
+        System.out.println("Total Retransmitted Packets: " + Integer.toString(retransmit));
     }	
 
 }
