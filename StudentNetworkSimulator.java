@@ -102,7 +102,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
     public static int receiveCount = 0;
     public static int corruptionCount = 0;
     public static int retransmit = 0;
-
+    public static double[][] timerArray = new double[5000][2];
     // Add any necessary class variables here.  Remember, you cannot use
     // these variables to send messages error free!  They can only hold
     // state information for A or B.
@@ -188,6 +188,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (seqNum < aAcked + WindowSize)
         {
             toLayer3(A, packet);
+            timerArray[seqNum][0] = getTime();
             // track sent packets
             sendCount++;
         }
@@ -204,6 +205,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (checkSumSack(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload(),
                 packet.getSack()))
         {
+            timerArray[packet.getSeqnum()][1] = getTime();
             // remember most recently received ack
             int prev_aAcked = aAcked;
             // update ack index
@@ -284,6 +286,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                 if (aBuffer[i] != null)
                 {
                     toLayer3(A, aBuffer[i]);
+                    timerArray[i][0] = getTime();
                     // track sent packets
                     sendCount++;
                     System.out.println("Packet " + Integer.toString(aBuffer[i].getAcknum())
@@ -424,6 +427,9 @@ public class StudentNetworkSimulator extends NetworkSimulator
         System.out.println("Total packets lost due to error: " + Integer.toString(sendCount - receiveCount
                 - corruptionCount));
         System.out.println("Total retransmitted packets: " + Integer.toString(retransmit));
+        
+        double avgRTT = 0;
+        int i = 0;
     }	
 
 }
