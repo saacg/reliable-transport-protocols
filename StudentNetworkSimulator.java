@@ -158,10 +158,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         int ackNum = aCurrentSeqNo;
         aCurrentSeqNo++;
         int checkSum = computeChecksum(seqNum, ackNum, payload);
-        System.out.println("Packet " + Integer.toString(ackNum) + " received at A");
-        System.out.println("aCurrentSeqNo = " + Integer.toString(aCurrentSeqNo - 1));
         Packet packet = new Packet(seqNum, ackNum, checkSum, payload);
-        System.out.println("aAcked = " + Integer.toString(aAcked));
         aBuffer[seqNum] = packet;
         if (seqNum < aAcked + WindowSize)
         {
@@ -204,7 +201,6 @@ public class StudentNetworkSimulator extends NetworkSimulator
             }
             else
                 {
-                System.out.println("Ack Number " + Integer.toString(aAcked) + " received at A.");
                 // Ack is not a duplicate.
                 // discard packets from previously acked packet up to
                 // currently acked packet.
@@ -215,6 +211,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
                         aBuffer[i] = null;
                     }
                 }
+                System.out.println("Window size adjusted from " + Integer.toString(prev_aAcked)
+                        + " to " + Integer.toString(aAcked + WindowSize) + ".");
                 // send packets within adjusted sender window
                 for (int i = prev_aAcked + WindowSize; i < aAcked + WindowSize; i++)
                 {
@@ -225,6 +223,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                         sendCount++;
                         System.out.println("Packet " + Integer.toString(aBuffer[i].getAcknum())
                                 + " sent to B after window adjustment.");
+
                     }
                 }
                 stopTimer(A);
@@ -280,14 +279,11 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (checkSum(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload()))
         {
             System.out.println("Packet " + Integer.toString(packet.getSeqnum()) + " received at B.");
-            System.out.println("bLastAcked = " + Integer.toString(bLastAcked));
             bBuffer[packet.getSeqnum()] = packet;
             int i = bLastAcked + 1;
             while(bBuffer[i] != null)
             {
                 toLayer5(bBuffer[i].getPayload());
-                System.out.println("Packet " + Integer.toString(bBuffer[i].getSeqnum())
-                        + " sent to upper layer from B");
                 i++;
             }
             if (i - 1 > -1)
@@ -310,7 +306,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
                         toLayer3(B, ackPack);
                         // keep track of total packets sent
                         sendCount++;
-                        System.out.println("Ack for " + Integer.toString(bBuffer[i - 1].getSeqnum()) + " sent from B to A");
+                        System.out.println("Ack for " + Integer.toString(bBuffer[i - 1].getSeqnum())
+                                + " sent from B to A");
                     }
                 }
             }
@@ -333,11 +330,13 @@ public class StudentNetworkSimulator extends NetworkSimulator
     protected void Simulation_done()
     {
         System.out.println("Done!");
-        System.out.println("Total Packets Sent: " + Integer.toString(sendCount));
-        System.out.println("Total Packets Received: " + Integer.toString(receiveCount));
-        System.out.println("Total Packets Lost Due to Corruption: " + Integer.toString(corruptionCount));
-        System.out.println("Total Packets Lost Due to Error: " + Integer.toString(sendCount - receiveCount
+        System.out.println();
+        System.out.println("Some stats: ");
+        System.out.println("Total packets sent to/from both sides: " + Integer.toString(sendCount));
+        System.out.println("Total packets received by both sides: " + Integer.toString(receiveCount));
+        System.out.println("Total packets lost due to corruption: " + Integer.toString(corruptionCount));
+        System.out.println("Total packets lost due to error: " + Integer.toString(sendCount - receiveCount
                 - corruptionCount));
-        System.out.println("Total Retransmitted Packets: " + Integer.toString(retransmit));
+        System.out.println("Total retransmitted packets: " + Integer.toString(retransmit));
     }
 }
