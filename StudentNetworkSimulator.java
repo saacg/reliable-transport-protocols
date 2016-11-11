@@ -161,9 +161,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         }
         for (int i = 0; i < sack.length; i++)
         {
-            System.out.println(Integer.toString(sack[i]));
             checkSum += sack[i];
-
         }
         return checkSum;
     }
@@ -179,17 +177,13 @@ public class StudentNetworkSimulator extends NetworkSimulator
         int ackNum = aCurrentSeqNo;
         aCurrentSeqNo++;
         int checkSum = computeChecksum(seqNum, ackNum, payload);
-        System.out.println("Packet " + Integer.toString(ackNum) + " received at A");
-        // System.out.println("aCurrentSeqNo = " + Integer.toString(aCurrentSeqNo - 1));
         Packet packet = new Packet(seqNum, ackNum, checkSum, payload);
-        // System.out.println("aAcked = " + Integer.toString(aAcked));
         aBuffer[seqNum] = packet;
         if (seqNum < aAcked + WindowSize)
         {
             toLayer3(A, packet);
             // track sent packets
             sendCount++;
-            System.out.println("Packet " + Integer.toString(ackNum) + " sent to B");
         }
     }
     
@@ -207,7 +201,14 @@ public class StudentNetworkSimulator extends NetworkSimulator
             int prev_aAcked = aAcked;
             // update Ack index
             aAcked = packet.getSeqnum();
-            System.out.println("Ack Number " + Integer.toString(aAcked) + " received at A.");
+            if (prev_aAcked == aAcked)
+            {
+                System.out.println("Duplicate Ack for " + Integer.toString(aAcked) + " received at A.");
+            }
+            else
+            {
+                System.out.println("Ack for " + Integer.toString(aAcked) + " received at A.");
+            }
             int[] pktSack = packet.getSack();
             for (int i = 0; i < 4; i++)
             {
@@ -262,6 +263,11 @@ public class StudentNetworkSimulator extends NetworkSimulator
                 {
                     aBuffer[i] = null;
                 }
+            }
+            if (prev_aAcked != aAcked)
+            {
+                System.out.println("Window size adjusted from " + Integer.toString(prev_aAcked)
+                        + " to " + Integer.toString(aAcked));
             }
             // send packets within adjusted sender window
             for (int i = prev_aAcked + WindowSize; i < aAcked + WindowSize; i++)
@@ -333,8 +339,6 @@ public class StudentNetworkSimulator extends NetworkSimulator
             while(bBuffer[i] != null)
             {
                 toLayer5(bBuffer[i].getPayload());
-                System.out.println("Packet " + Integer.toString(bBuffer[i].getSeqnum())
-                        + " sent to upper layer from B");
                 i++;
             }
             // just for case right after init() when i = 0
@@ -403,12 +407,14 @@ public class StudentNetworkSimulator extends NetworkSimulator
     protected void Simulation_done()
     {
         System.out.println("Done!");
-        System.out.println("Total Packets Sent: " + Integer.toString(sendCount));
-        System.out.println("Total Packets Received: " + Integer.toString(receiveCount));
-        System.out.println("Total Packets Lost Due to Corruption: " + Integer.toString(corruptionCount));
-        System.out.println("Total Packets Lost Due to Error: " + Integer.toString(sendCount - receiveCount
+        System.out.println();
+        System.out.println("Some stats: ");
+        System.out.println("Total packets sent to/from both sides: " + Integer.toString(sendCount));
+        System.out.println("Total packets received by both sides: " + Integer.toString(receiveCount));
+        System.out.println("Total packets lost due to corruption: " + Integer.toString(corruptionCount));
+        System.out.println("Total packets lost due to error: " + Integer.toString(sendCount - receiveCount
                 - corruptionCount));
-        System.out.println("Total Retransmitted Packets: " + Integer.toString(retransmit));
+        System.out.println("Total retransmitted packets: " + Integer.toString(retransmit));
     }	
 
 }
