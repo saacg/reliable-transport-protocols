@@ -204,14 +204,16 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // sent from the B-side.
     protected void aInput(Packet packet)
     {
+        // for rtt we don't care about corruption checking
+        double rawInputTime = getTime();
         // track incoming packets
         receiveCount++;
         if (checkSumSack(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload(),
                 packet.getSack()))
         {   
-            double curr_time = getTime();
-            ctArray[packet.getSeqnum()][1] = curr_time;
-            rttArray[packet.getSeqnum()][1] = curr_time; 
+            //for communication time we do care about the corruption checking
+            ctArray[packet.getSeqnum()][1] = getTime();
+            rttArray[packet.getSeqnum()][1] = rawInputTime; 
             // remember most recently received ack
             int prev_aAcked = aAcked;
             // update ack index
