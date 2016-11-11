@@ -129,11 +129,13 @@ public class StudentNetworkSimulator extends NetworkSimulator
         return (computeChecksum(seqNo, ackNo, payload) == checksum);
     }
 
+
     public boolean checkSumSack(int seqNo, int ackNo, int checksum, String payload, int[] sack)
     {
         return (computeChecksumSack(seqNo, ackNo, payload, sack) == checksum);
     }
 
+    // sum chars
     public int getStringSum(String str){
         int sum = 0;
         if(str != null && !str.isEmpty()){
@@ -144,6 +146,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         return sum;
     }
 
+    // checksum for packets A --> B
     public int computeChecksum(int seqNum, int ackNum, String payload){
         int checkSum = seqNum + ackNum;
         if(payload != null && !payload.isEmpty()){
@@ -152,6 +155,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         return checkSum;
     }
 
+    // checksum for packets B --> A w/ SACK
     public int computeChecksumSack(int seqNum, int ackNum, String payload, int[] sack)
     {
         int checkSum = seqNum + ackNum;
@@ -178,7 +182,9 @@ public class StudentNetworkSimulator extends NetworkSimulator
         aCurrentSeqNo++;
         int checkSum = computeChecksum(seqNum, ackNum, payload);
         Packet packet = new Packet(seqNum, ackNum, checkSum, payload);
+        // place created packet in A's buffer
         aBuffer[seqNum] = packet;
+        // send only if within sender's window
         if (seqNum < aAcked + WindowSize)
         {
             toLayer3(A, packet);
@@ -198,9 +204,11 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (checkSumSack(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload(),
                 packet.getSack()))
         {
+            // remember most recently received ack
             int prev_aAcked = aAcked;
-            // update Ack index
+            // update ack index
             aAcked = packet.getSeqnum();
+            // detect duplicate acks
             if (prev_aAcked == aAcked)
             {
                 System.out.println("Duplicate Ack for " + Integer.toString(aAcked) + " received at A.");
@@ -209,6 +217,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
             {
                 System.out.println("Ack for " + Integer.toString(aAcked) + " received at A.");
             }
+            // read in sacks
             int[] pktSack = packet.getSack();
             for (int i = 0; i < 4; i++)
             {
@@ -233,7 +242,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                     }
 
                 }
-                // now do same test for non-negative elements of sack array
+                // now do same test for remaining elements of sack array
                 if (pktSack[i] != -1 && pktSack[i + 1] != -1)
                 {
                     int difference = pktSack[i + 1] - pktSack[i];
@@ -334,7 +343,9 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (checkSum(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload()))
         {
             System.out.println("Packet " + Integer.toString(packet.getSeqnum()) + " received at B.");
+            // place packet in B's buffer
             bBuffer[packet.getSeqnum()] = packet;
+            // send all consecutively buffered packets after this packet
             int i = bLastAcked + 1;
             while(bBuffer[i] != null)
             {
@@ -344,10 +355,8 @@ public class StudentNetworkSimulator extends NetworkSimulator
             // just for case right after init() when i = 0
             if (i - 1 > -1)
             {
-                // should be the case, since i was first index where bBuffer was null
                 if (bBuffer[i - 1] != null)
                 {
-                    // need to initialize sack array for ackPack and checkSum below
                     Packet ackPack = new Packet(bBuffer[i - 1].getSeqnum(), bBuffer[i - 1].getAcknum(), 0);
                     int k = 0;
                     // populate sack array
