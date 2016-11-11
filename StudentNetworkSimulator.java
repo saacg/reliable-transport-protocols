@@ -102,7 +102,9 @@ public class StudentNetworkSimulator extends NetworkSimulator
     public static int receiveCount = 0;
     public static int corruptionCount = 0;
     public static int retransmit = 0;
-    public static double[][] timerArray = new double[5000][2];
+    public static int maxBufferLength = 5000;
+    public static double[][] timerArray = new double[maxBufferLength][2];
+
     // Add any necessary class variables here.  Remember, you cannot use
     // these variables to send messages error free!  They can only hold
     // state information for A or B.
@@ -429,7 +431,18 @@ public class StudentNetworkSimulator extends NetworkSimulator
         System.out.println("Total retransmitted packets: " + Integer.toString(retransmit));
         
         double avgRTT = 0;
+        int maxDataRange = 100; // set to determine how many packets to analyze for rtt
         int i = 0;
+        while(i < maxDataRange && maxDataRange < maxBufferLength)
+        {
+           if(timerArray[i][0] > 0 && timerArray[i][1] > 0){
+               avgRTT += (timerArray[i][1] - timerArray[i][0]); 
+           } 
+           i++;
+        } 
+        avgRTT /= (i - 1);
+        System.out.println("Average RTT per packet: " + Double.toString(avgRTT));
+
     }	
 
 }
