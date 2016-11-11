@@ -160,6 +160,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         int checkSum = computeChecksum(seqNum, ackNum, payload);
         Packet packet = new Packet(seqNum, ackNum, checkSum, payload);
         aBuffer[seqNum] = packet;
+        // send if within window
         if (seqNum < aAcked + WindowSize)
         {
             toLayer3(A, packet);
@@ -179,7 +180,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         receiveCount++;
         if (checkSum(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload()))
         {
-
+            // remember most recently acked packet
             int prev_aAcked = aAcked;
             // update Ack index
             aAcked = packet.getSeqnum();
@@ -282,13 +283,16 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (checkSum(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload()))
         {
             System.out.println("Packet " + Integer.toString(packet.getSeqnum()) + " received at B.");
+            // place packet in B's buffer
             bBuffer[packet.getSeqnum()] = packet;
             int i = bLastAcked + 1;
+            // send any consecutive packets ahead of this packet to the upper layer
             while(bBuffer[i] != null)
             {
                 toLayer5(bBuffer[i].getPayload());
                 i++;
             }
+            // case after init() when bLastAcked = 0
             if (i - 1 > -1)
             {
                 if (bBuffer[i - 1] != null)
