@@ -102,9 +102,9 @@ public class StudentNetworkSimulator extends NetworkSimulator
     public static int receiveCount = 0;
     public static int corruptionCount = 0;
     public static int retransmit = 0;
-    public static int maxBufferLength = 5000;
-    public static double[][] timerArray = new double[maxBufferLength][2];
-
+    public static int maxBufferLength = 1500;
+    public static double[][] ctArray = new double[maxBufferLength][2];
+    public static double[][] rttArray = new double[maxBufferLength][2];
     // Add any necessary class variables here.  Remember, you cannot use
     // these variables to send messages error free!  They can only hold
     // state information for A or B.
@@ -190,7 +190,9 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (seqNum < aAcked + WindowSize)
         {
             toLayer3(A, packet);
-            timerArray[seqNum][0] = getTime();
+            double currTime = getTime();
+            ctArray[seqNum][0] = currTime;
+            rttArray[seqNum][0] = currTime;
             // track sent packets
             sendCount++;
         }
@@ -206,8 +208,10 @@ public class StudentNetworkSimulator extends NetworkSimulator
         receiveCount++;
         if (checkSumSack(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload(),
                 packet.getSack()))
-        {
-            timerArray[packet.getSeqnum()][1] = getTime();
+        {   
+            double curr_time = getTime();
+            ctArray[packet.getSeqnum()][1] = curr_time;
+            rttArray[packet.getSeqnum()][1] = curr_time; 
             // remember most recently received ack
             int prev_aAcked = aAcked;
             // update ack index
@@ -237,6 +241,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                             if (aBuffer[j] != null)
                             {
                                 toLayer3(A, aBuffer[j]);
+                                rttArray[j][0] = -1; // don't want to include retransmitted packets in rtt calculation 
                                 // track sent packets
                                 sendCount++;
                                 retransmit++;
@@ -258,6 +263,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                             if (aBuffer[j] != null)
                             {
                                 toLayer3(A, aBuffer[j]);
+                                rttArray[j][0] = -1; // don't want to include retransmitted packets in rtt calculation 
                                 // track sent packets
                                 sendCount++;
                                 retransmit++;
@@ -288,7 +294,9 @@ public class StudentNetworkSimulator extends NetworkSimulator
                 if (aBuffer[i] != null)
                 {
                     toLayer3(A, aBuffer[i]);
-                    timerArray[i][0] = getTime();
+                    double currTime = getTime();
+                    ctArray[i][0] = currTime;
+                    rttArray[i][0] = currTime;
                     // track sent packets
                     sendCount++;
                     System.out.println("Packet " + Integer.toString(aBuffer[i].getAcknum())
@@ -430,17 +438,28 @@ public class StudentNetworkSimulator extends NetworkSimulator
                 - corruptionCount));
         System.out.println("Total retransmitted packets: " + Integer.toString(retransmit));
         
+        double avgCT = 0;
         double avgRTT = 0;
-        int maxDataRange = 100; // set to determine how many packets to analyze for rtt
         int i = 0;
-        while(i < maxDataRange && maxDataRange < maxBufferLength)
+        int ctCount = 0;
+        int rttCount = 0;
+        while(i < maxBufferLength)
         {
-           if(timerArray[i][0] > 0 && timerArray[i][1] > 0){
-               avgRTT += (timerArray[i][1] - timerArray[i][0]); 
+           if(ctArray[i][0] > 0 && ctArray[i][1] > 0){
+               avgCT += (ctArray[i][1] - ctArray[i][0]); 
+               ctCount++;
            } 
+           
+           if(rttArray[i][0] > 0 && rttArray[i][1] > 0){
+               avgRTT += (rttArray[i][1] - rttArray[i][0]); 
+               rttCount++;
+           }
+
            i++;
         } 
-        avgRTT /= (i - 1);
+        avgCT /= ctCount;
+        avgRTT /= rttCount;
+        System.out.println("Average communication time per packet: " + Double.toString(avgCT));
         System.out.println("Average RTT per packet: " + Double.toString(avgRTT));
 
     }	
