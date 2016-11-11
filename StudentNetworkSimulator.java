@@ -191,7 +191,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                 if (aBuffer[aAcked + 1] != null)
                 {
                     toLayer3(A, aBuffer[aAcked + 1]);
-                    timeArray[aAcked + 1][0] = getTime();
+                   // timeArray[aAcked + 1][0] = getTime();
                     // keep track of total packets sent
                     sendCount++;
                     retransmit++;
@@ -252,7 +252,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (aBuffer[aAcked + 1] != null)
         {
             toLayer3(A, aBuffer[aAcked + 1]);
-            timeArray[aAcked + 1][0] = getTime();
+            //timeArray[aAcked + 1][0] = getTime();
             // keep track of total packets sent
             sendCount++;
             retransmit++;
@@ -346,11 +346,17 @@ public class StudentNetworkSimulator extends NetworkSimulator
         System.out.println("Total packets lost due to error: " + Integer.toString(sendCount - receiveCount
                 - corruptionCount));
         System.out.println("Total retransmitted packets: " + Integer.toString(retransmit));
-       int i = 0;
        double avgRtt = 0;
-       while(timeArray[i][0] > 0)
+       int i = 0;
+       for(; i < 100; i++)
        {
-             
+            if(timeArray[i][0] > 0 && timeArray[i][1] > 0)
+            {
+                avgRtt += (timeArray[i][1] - timeArray[i][0]);             
+                //System.out.println("sequence no: " + i + " start time: " + timeArray[i][0] + " end time: " + timeArray[i][1]); 
+            }
        } 
+       avgRtt /= (i - 1);
+       System.out.println("Average RTT per packet: " + Double.toString(avgRtt));
     }
 }
