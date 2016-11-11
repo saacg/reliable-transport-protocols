@@ -211,8 +211,11 @@ public class StudentNetworkSimulator extends NetworkSimulator
                         aBuffer[i] = null;
                     }
                 }
-                System.out.println("Window size adjusted from " + Integer.toString(prev_aAcked)
-                        + " to " + Integer.toString(aAcked + WindowSize) + ".");
+                if (prev_aAcked != aAcked)
+                {
+                    System.out.println("Window size adjusted from " + Integer.toString(prev_aAcked + WindowSize)
+                            + " to " + Integer.toString(aAcked + WindowSize) + ".");
+                }
                 // send packets within adjusted sender window
                 for (int i = prev_aAcked + WindowSize; i < aAcked + WindowSize; i++)
                 {
