@@ -166,12 +166,14 @@ public class StudentNetworkSimulator extends NetworkSimulator
         if (seqNum < aAcked + WindowSize)
         {
             toLayer3(A, packet);
-            ctArray[seqNum][0] = getTime();
-            rttArray[seqNum][0] = getTime();
+            //begin recording rtt and communication times
+            double currTime = getTime();
+            ctArray[seqNum][0] = currTime;
+            rttArray[seqNum][0] = currTime;
             // keep track of total packets sent
             sendCount++;
             // startTimer(A, RxmtInterval);
-            System.out.println("Packet " + Integer.toString(ackNum) + " sent to B");
+            //System.out.println("Packet " + Integer.toString(ackNum) + " sent to B");
         }
     }
     
@@ -181,15 +183,25 @@ public class StudentNetworkSimulator extends NetworkSimulator
     // sent from the B-side.
     protected void aInput(Packet packet)
     {
+        double rawInputTime = getTime(); //for rtt, don't care about corruption/loss processing
+
         receiveCount++;
         if (checkSum(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload()))
         {
-            ctArray[packet.getSeqnum()][1] = getTime();
-            rttArray[packet.getSeqnum()][1] = getTime(); 
+            double inputTime = getTime();
+            ctArray[packet.getSeqnum()][1] = inputTime;
+            rttArray[packet.getSeqnum()][1] = rawInputTime; 
             // remember most recently acked packet
             int prev_aAcked = aAcked;
             // update Ack index
             aAcked = packet.getSeqnum();
+            for(int i = prev_aAcked; i < aAcked; i++)
+            {
+                if(i > -1)
+                {
+                    ctArray[i][1] = inputTime;
+                } 
+            }
             // duplicate ack case
             if (aAcked == prev_aAcked)
             {
@@ -200,9 +212,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                     // keep track of total packets sent
                     sendCount++;
                     retransmit++;
-                    System.out.println("Duplicate Ack " + Integer.toString(aAcked)
-                            + " received at A. Packet " + Integer.toString(aAcked + 1)
-                            + " re-sent to B.");
+                    //System.out.println("Duplicate Ack " + Integer.toString(aAcked) + " received at A. Packet " + Integer.toString(aAcked + 1) + " re-sent to B.");
                     stopTimer(A);
                     startTimer(A, RxmtInterval);
                 }
@@ -221,8 +231,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                 }
                 if (prev_aAcked != aAcked)
                 {
-                    System.out.println("Window size adjusted from " + Integer.toString(prev_aAcked + WindowSize)
-                            + " to " + Integer.toString(aAcked + WindowSize) + ".");
+                    //System.out.println("Window size adjusted from " + Integer.toString(prev_aAcked + WindowSize) + " to " + Integer.toString(aAcked + WindowSize) + ".");
                 }
                 // send packets within adjusted sender window
                 for (int i = prev_aAcked + WindowSize; i < aAcked + WindowSize; i++)
@@ -235,8 +244,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
 
                         // keep track of total packets sent
                         sendCount++;
-                        System.out.println("Packet " + Integer.toString(aBuffer[i].getAcknum())
-                                + " sent to B after window adjustment.");
+                        //System.out.println("Packet " + Integer.toString(aBuffer[i].getAcknum()) + " sent to B after window adjustment.");
 
                     }
                 }
@@ -263,8 +271,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
             // keep track of total packets sent
             sendCount++;
             retransmit++;
-            System.out.println("Packet " + Integer.toString(aBuffer[aAcked + 1].getAcknum())
-                    + " re-sent to B because of timeout.");
+            //System.out.println("Packet " + Integer.toString(aBuffer[aAcked + 1].getAcknum()) + " re-sent to B because of timeout.");
             startTimer(A, RxmtInterval);
         } else {
             startTimer(A, RxmtInterval);
@@ -293,7 +300,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
         receiveCount++;
         if (checkSum(packet.getSeqnum(), packet.getAcknum(), packet.getChecksum(), packet.getPayload()))
         {
-            System.out.println("Packet " + Integer.toString(packet.getSeqnum()) + " received at B.");
+            //System.out.println("Packet " + Integer.toString(packet.getSeqnum()) + " received at B.");
             // place packet in B's buffer
             bBuffer[packet.getSeqnum()] = packet;
             int i = bLastAcked + 1;
@@ -324,8 +331,7 @@ public class StudentNetworkSimulator extends NetworkSimulator
                         toLayer3(B, ackPack);
                         // keep track of total packets sent
                         sendCount++;
-                        System.out.println("Ack for " + Integer.toString(bBuffer[i - 1].getSeqnum())
-                                + " sent from B to A");
+                        //System.out.println("Ack for " + Integer.toString(bBuffer[i - 1].getSeqnum()) + " sent from B to A");
                     }
                 }
             }
@@ -368,17 +374,32 @@ public class StudentNetworkSimulator extends NetworkSimulator
             {
                 avgCT += (ctArray[i][1] - ctArray[i][0]);             
                 ctCount++;
-                //System.out.println("sequence no: " + i + " start time: " + ctArray[i][0] + " end time: " + ctArray[i][1]); 
             }
         
             if(rttArray[i][0] > 0 && rttArray[i][1] > 0)
             {
                 avgRTT += (rttArray[i][1] - rttArray[i][0]);             
                 rttCount++;
-                //System.out.println("sequence no: " + i + " start time: " + ctArray[i][0] + " end time: " + ctArray[i][1]); 
             }
             i++;
        } 
+       // uncomment the following section to print out the rtt and communcation times for each packet
+       for(i = 0; i < maxBufferLength; i++)
+       {
+           if(rttArray[i][0] > 0 && rttArray[i][1] > 0)    
+           {
+               System.out.println(Integer.toString(i) + ", " + Double.toString(rttArray[i][1] - rttArray[i][0]));
+           }
+       }
+
+       for(i = 0; i < maxBufferLength; i++)
+       {
+           if(ctArray[i][0] > 0 && ctArray[i][1] > 0)    
+           {
+               System.out.println(Integer.toString(i) + ", " + Double.toString(ctArray[i][1] - ctArray[i][0]));
+           }
+       }
+
        avgCT /= ctCount;
        avgRTT /= rttCount;
        System.out.println("Average communication time per packet: " + Double.toString(avgCT));
